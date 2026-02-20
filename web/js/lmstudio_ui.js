@@ -28,12 +28,38 @@ app.registerExtension({
 
     async nodeCreated(node) {
         if (node.comfyClass === "LMStudio_Unified_Chat") {
-            // Add a custom text widget to display the stream output
-            node.displayWidget = node.addWidget("customtext", "Output Stream", "", "output");
+            // Find the pre-registered node Schema widget dynamically to natively support Vue 2.0 streaming
+            const targetWidget = node.widgets.find(w => w.name === "stream_output");
+            if (targetWidget) {
+                node.displayWidget = targetWidget;
+                if (targetWidget.inputEl) {
+                    targetWidget.inputEl.readOnly = true;
+                }
+            }
             
-            // Ensure it is read-only
-            if (node.displayWidget.inputEl) {
-                node.displayWidget.inputEl.readOnly = true;
+            // 2. NEW: Fetch and populate the model_id dropdown
+            const modelWidget = node.widgets.find(w => w.name === "model_id");
+            if (modelWidget) {
+                try {
+                    // Call our custom python route
+                    api.fetchApi("/lmstudio/models").then(response => response.json()).then(data => {
+                        if (data.models && data.models.length > 0) {
+                            // Replace the widget's options with the live LM Studio models
+                            modelWidget.options.values = data.models;
+                            modelWidget.value = data.models[0]; // Auto-select the first one
+                            app.graph.setDirtyCanvas(true, false);
+                        }
+                    }).catch(e => {
+                        console.error("[LM Studio] Failed to fetch models from backend", e);
+                        modelWidget.options.values = ["LM Studio offline"];
+                        modelWidget.value = "LM Studio offline";
+                        app.graph.setDirtyCanvas(true, false);
+                    });
+                } catch (e) {
+                    console.error("[LM Studio] Failed to fetch models from backend", e);
+                    modelWidget.options.values = ["LM Studio offline"];
+                    modelWidget.value = "LM Studio offline";
+                }
             }
             
             // Override the onExecuted callback directly on this instance

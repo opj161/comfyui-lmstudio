@@ -2,12 +2,30 @@ import base64
 import json
 import time
 import aiohttp
+from aiohttp import web
 import lmstudio as lms
 
 _server_available = False
 try:
     from server import PromptServer  # type: ignore
     _server_available = True
+    
+    if _server_available and PromptServer.instance is not None:
+        @PromptServer.instance.routes.get("/lmstudio/models")
+        async def fetch_lmstudio_models(request):
+            """Custom route to fetch models without blocking ComfyUI."""
+            try:
+                # 2-second timeout so UI doesn't hang if LM Studio is closed
+                async with aiohttp.ClientSession() as session:
+                    async with session.get("http://127.0.0.1:1234/api/v1/models", timeout=2) as resp:
+                        data = await resp.json()
+                        models = [m.get("id") or m.get("key") for m in data.get("data", []) or data.get("models", []) if m.get("type", "llm") == "llm" or m.get("object") == "model"]
+                        # The LM Studio V1 API returns models under "data" or "models" array with an "id" or "key" identifier
+                        if not models:
+                            models = ["No LLMs found in LM Studio"]
+                        return web.json_response({"models": models})
+            except Exception:
+                return web.json_response({"models": ["Ensure LM Studio is running..."]})
 except ImportError:
     pass
 
@@ -32,13 +50,14 @@ class LMStudioSDKClient:
     """Client for connecting via the official LM Studio SDK."""
 
     @staticmethod
-    async def generate(model_id: str, prompt: str, base64_image: str | None, temperature: float, max_tokens: int, node_id: str) -> tuple[str, str, str]:
+    async def generate(node_id: str, system_prompt: str, prompt: str, base64_image: str | None, model_id: str, seed: int, temperature: float, max_tokens: int) -> tuple[str, str, str]:
         send_ws_update(node_id, "clear", "")
         final_text = ""
         final_reasoning = ""
 
         config = {
             "temperature": temperature,
+            "seed": seed,
         }
         if max_tokens > 0:
             config["maxTokens"] = max_tokens
@@ -46,7 +65,11 @@ class LMStudioSDKClient:
         try:
             async with lms.AsyncClient() as client:
                 model = await client.llm.model(model_id)
-                chat = lms.Chat()
+                
+                if system_prompt.strip():
+                    chat = lms.Chat(system_prompt.strip())
+                else:
+                    chat = lms.Chat()
                 
                 if base64_image:
                     # Strip the data URI prefix if present and decode base64
@@ -60,14 +83,23 @@ class LMStudioSDKClient:
                 stream = await model.respond_stream(chat, config=config)
 
                 async for chunk in stream:
-                    if chunk.type == "reasoning.delta":
-                        final_reasoning += chunk.content
-                        send_ws_update(node_id, "reasoning", chunk.content)
-                    elif chunk.type == "message.delta":
-                        final_text += chunk.content
-                        send_ws_update(node_id, "text", chunk.content)
+                    content = getattr(chunk, "content", "")
+                    
+                    if not content:
+                        continue
 
-                stats = stream.result().stats
+                    is_reasoning = getattr(chunk, "is_reasoning", False)
+                    chunk_type = getattr(chunk, "type", "")
+                    
+                    if is_reasoning or chunk_type == "reasoning.delta":
+                        final_reasoning += content
+                        send_ws_update(node_id, "reasoning", content)
+                    else:
+                        final_text += content
+                        send_ws_update(node_id, "text", content)
+
+                result_obj = await stream.result()
+                stats = result_obj.stats
                 ttft = getattr(stats, "time_to_first_token_sec", 0.0)
                 tokens = getattr(stats, "predicted_tokens_count", 0)
                 stats_str = f"TTFT: {ttft:.2f}s, Tokens: {tokens}"
@@ -80,7 +112,7 @@ class LMStudioRESTClient:
     """Fallback client for connecting via raw REST API."""
 
     @staticmethod
-    async def generate(server_url: str, model_id: str, prompt: str, base64_image: str | None, temperature: float, max_tokens: int, node_id: str) -> tuple[str, str, str]:
+    async def generate(node_id: str, system_prompt: str, server_url: str, model_id: str, prompt: str, base64_image: str | None, seed: int, temperature: float, max_tokens: int) -> tuple[str, str, str]:
         send_ws_update(node_id, "clear", "")
         final_text = ""
         final_reasoning = ""
@@ -98,8 +130,12 @@ class LMStudioRESTClient:
             "model": model_id,
             "input": input_data,
             "stream": True,
-            "temperature": temperature
+            "temperature": temperature,
+            "seed": seed
         }
+
+        if system_prompt.strip():
+            payload["system_prompt"] = system_prompt.strip()
 
         if max_tokens > 0:
             payload["max_output_tokens"] = max_tokens

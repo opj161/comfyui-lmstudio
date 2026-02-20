@@ -15,14 +15,17 @@ async def test_lmstudio_node_execute():
         mock_generate.return_value = ("Final Answer", "Thinking...", "TPS: 30")
 
         result = await LMStudioChatNode.execute(
+            system_prompt="You are a helpful AI assistant.",
             prompt="Hello!",
-            connection_mode="SDK",
+            connection_mode={"connection_mode": "SDK"},
             model_id="qwen-2.5",
+            seed=42,
             temperature=0.7,
             max_tokens=100,
-            server_url="http://localhost:1234",
+            stream_output="Waiting...",
             debug_mode=False,
-            image=None
+            image=None,
+            unique_id="test_node_id"
         )
 
         assert isinstance(result, io.NodeOutput)
@@ -32,10 +35,12 @@ async def test_lmstudio_node_execute():
 
         # Verify it called the correct generator
         mock_generate.assert_called_once_with(
-            model_id="qwen-2.5",
+            node_id="test_node_id",
+            system_prompt="You are a helpful AI assistant.",
             prompt="Hello!",
             base64_image=None,
+            model_id="qwen-2.5",
+            seed=42,
             temperature=0.7,
-            max_tokens=100,
-            node_id="test_node_id"
+            max_tokens=100
         )
