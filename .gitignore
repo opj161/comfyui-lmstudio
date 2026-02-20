@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+LICENSE
+
 # OSX useful to ignore
 *.DS_Store
 .AppleDouble

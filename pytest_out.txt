@@ -1,0 +1,44 @@
+============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\j_opp\Projects\ComfyUI\custom_nodes\comfyui-lmstudio\tests
+configfile: pytest.ini
+plugins: anyio-4.9.0, Faker-38.2.0, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 0 items / 1 error
+
+=================================== ERRORS ====================================
+_____________________________ ERROR collecting . ______________________________
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\pluggy\_hooks.py:512: in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\pluggy\_manager.py:120: in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\_pytest\main.py:456: in pytest_ignore_collect
+    norecursepatterns = config.getini("norecursedirs")
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\_pytest\config\__init__.py:1662: in getini
+    self._inicache[canonical_name] = val = self._getini(canonical_name)
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\_pytest\config\__init__.py:1704: in _getini
+    return self._getini_ini(name, canonical_name, type, value, default)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\_pytest\config\__init__.py:1746: in _getini_ini
+    return shlex.split(value) if isinstance(value, str) else value
+           ^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\shlex.py:313: in split
+    return list(lex)
+           ^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\shlex.py:300: in __next__
+    token = self.get_token()
+            ^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\shlex.py:109: in get_token
+    raw = self.read_token()
+          ^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\shlex.py:191: in read_token
+    raise ValueError("No closing quotation")
+E   ValueError: No closing quotation
+=========================== short test summary info ===========================
+ERROR tests - ValueError: No closing quotation
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+============================== 1 error in 0.21s ===============================
