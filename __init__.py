@@ -7,6 +7,9 @@ __all__ = [
 
 __version__ = "0.0.1"
 
-from .src.lmstudio.nodes import comfy_entrypoint
+try:
+    from .src.lmstudio.nodes import comfy_entrypoint
+except ImportError:
+    from src.lmstudio.nodes import comfy_entrypoint
 
 WEB_DIRECTORY = "./web"

@@ -1,0 +1,1894 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: **/*.log, **/cache/**, **/tmp/**, /node_modules, /.pnp, .pnp.js, /coverage, /.next/, /out/, /build, .DS_Store, *.pem, .vercel, *.tsbuildinfo, next-env.d.ts, .npm, .eslintcache, .svelte-kit/, **/.vitepress/dist, **/.vitepress/cache, *icon0.svg, vite.config.js.timestamp-*, src/app/icon0.svg, vite.config.ts.timestamp-*, !.env*, **/*.svg
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+</notes>
+
+</file_summary>
+
+<directory_structure>
+__init__.py
+.editorconfig
+.github/ISSUE_TEMPLATE.md
+.github/workflows/build-pipeline.yml
+.github/workflows/publish_node.yml
+.github/workflows/validate.yml
+.gitignore
+.pre-commit-config.yaml
+MANIFEST.in
+pyproject.toml
+pytest_out.txt
+README.md
+specs/API_AND_DATA_CONTRACTS.md
+specs/blueprint.md
+specs/CODING_STANDARDS_AND_TESTING.md
+specs/Implementation_Plan.md
+specs/reference_overview.md
+specs/SCAFFOLD_REFACTORING_GUIDE.md
+specs/WEBSOCKET_PROTOCOL.md
+src/lmstudio/__init__.py
+src/lmstudio/client.py
+src/lmstudio/nodes.py
+src/lmstudio/utils.py
+tests/conftest.py
+tests/test_lmstudio.py
+tests/test_utils.py
+web/js/example.js
+web/js/lmstudio_ui.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="__init__.py">
+"""Top-level package for comfyui-lmstudio."""
+
+__all__ = [
+    "comfy_entrypoint",
+    "WEB_DIRECTORY",
+]
+
+__version__ = "0.0.1"
+
+from .src.lmstudio.nodes import comfy_entrypoint
+
+WEB_DIRECTORY = "./web"
+</file>
+
+<file path=".editorconfig">
+# http://editorconfig.org
+
+root = true
+
+[*]
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+charset = utf-8
+end_of_line = lf
+
+[*.bat]
+indent_style = tab
+end_of_line = crlf
+
+[LICENSE]
+insert_final_newline = false
+
+[Makefile]
+indent_style = tab
+</file>
+
+<file path=".github/ISSUE_TEMPLATE.md">
+- comfyui-lmstudio version:
+- Python version:
+- Operating System:
+
+### Description
+
+Describe what you were trying to get done.
+Tell us what happened, what went wrong, and what you expected to happen.
+
+### What I Did
+
+```
+Paste the command(s) you ran and the output.
+If there was a crash, please include the traceback here.
+```
+</file>
+
+<file path=".github/workflows/build-pipeline.yml">
+name: CI build
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    env:
+      PYTHONIOENCODING: "utf8"
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: ["3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .[dev]
+      - name: Run Linting
+        run: |
+          ruff check .
+      - name: Run Tests
+        run: |
+          pytest tests/
+</file>
+
+<file path=".github/workflows/publish_node.yml">
+name: 📦 Publish to Comfy registry
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - '*'
+
+permissions:
+  issues: write
+
+jobs:
+  publish-node:
+    name: Publish Custom Node to registry
+    runs-on: ubuntu-latest
+    steps:
+      - name: ♻️ Check out code
+        uses: actions/checkout@v4
+      - name: 📦 Publish Custom Node
+        uses: Comfy-Org/publish-node-action@main
+        with:
+          personal_access_token: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
+</file>
+
+<file path=".github/workflows/validate.yml">
+name: Validate backwards compatibility
+
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: comfy-org/node-diff@main
+</file>
+
+<file path=".gitignore">
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+LICENSE
+
+# OSX useful to ignore
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+env/
+venv/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# PyInstaller
+#  Usually these files are written by a python script from a template
+#  before PyInstaller builds the exe, so as to inject date/other infos into it.
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+
+# Sphinx documentation
+docs/_build/
+
+# IntelliJ Idea
+.idea
+*.iml
+*.ipr
+*.iws
+
+# PyBuilder
+target/
+
+# Cookiecutter
+output/
+python_boilerplate/
+cookiecutter-pypackage-env/
+
+# vscode settings
+.history/
+*.code-workspace
+
+# Frontend extension
+node_modules/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+node.zip
+.vscode/
+.claude/
+
+.docs
+</file>
+
+<file path=".pre-commit-config.yaml">
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.4.9
+    hooks:
+      # Run the linter.
+      - id: ruff
+        args: [ --fix ]
+      # Run the formatter.
+      - id: ruff-format
+</file>
+
+<file path="MANIFEST.in">
+include LICENSE
+include README.md
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[co]
+
+recursive-include docs *.rst conf.py Makefile make.bat *.jpg *.png *.gif
+
+graft src/comfyui-lmstudio/web
+</file>
+
+<file path="pyproject.toml">
+[build-system]
+requires = ["setuptools>=70.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "comfyui-lmstudio"
+version = "0.0.1"
+description = "These custom nodes acts as a bidirectional bridge between ComfyUI's synchronous/tensor-based ecosystem and LM Studio's asynchronous/text-based inference engine."
+authors = [
+  {name = "opj161", email = "opj161@outlook.com"}
+]
+readme = "README.md"
+license = {text = "GNU General Public License v3"}
+requires-python = ">=3.10"
+classifiers = []
+dependencies = [
+    "aiohttp",
+    "Pillow",
+    "numpy",
+    "lmstudio",
+    "comfyui-frontend-package"
+]
+
+
+
+[project.optional-dependencies]
+dev = [
+    "bump-my-version",
+    "coverage",  # testing
+    "mypy",  # linting
+    "pre-commit", # runs linting on commit
+    "pytest",  # testing
+    "ruff",  # linting
+]
+
+[project.urls]
+Repository = "https://github.com/opj161/comfyui-lmstudio"
+BugTracker = "https://github.com/opj161/comfyui-lmstudio/issues"
+Documentation = "https://github.com/opj161/comfyui-lmstudio/wiki"
+
+
+[tool.comfy]
+PublisherId = "opj161"
+DisplayName = "comfyui-comfyui-lmstudio"
+Icon = ""
+Tags = []
+Repository = "https://github.com/opj161/comfyui-lmstudio"
+
+includes = []
+
+[tool.setuptools.package-data]
+"*" = ["*.*"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = [
+    "tests",
+]
+
+[tool.mypy]
+files = "."
+
+# Use strict defaults
+strict = true
+warn_unreachable = true
+warn_no_return = true
+
+[[tool.mypy.overrides]]
+# Don't require test functions to include types
+module = "tests.*"
+allow_untyped_defs = true
+disable_error_code = "attr-defined"
+
+[tool.ruff]
+# extend-exclude = ["static", "ci/templates"]
+line-length = 140
+src = ["src", "tests"]
+target-version = "py39"
+
+# Add rules to ban exec/eval
+[tool.ruff.lint]
+select = [
+    "S102",  # exec-builtin
+    "S307",  # eval-used
+    "W293",
+    "F",  # The "F" series in Ruff stands for "Pyflakes" rules, which catch various Python syntax errors and undefined names.
+    # See all rules here: https://docs.astral.sh/ruff/rules/#pyflakes-f
+]
+
+[tool.ruff.lint.flake8-quotes]
+inline-quotes = "double"
+</file>
+
+<file path="pytest_out.txt">
+============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-9.0.2, pluggy-1.6.0
+rootdir: C:\Users\j_opp\Projects\ComfyUI\custom_nodes\comfyui-lmstudio\tests
+configfile: pytest.ini
+plugins: anyio-4.9.0, Faker-38.2.0, asyncio-1.3.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 0 items / 1 error
+
+=================================== ERRORS ====================================
+_____________________________ ERROR collecting . ______________________________
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\pluggy\_hooks.py:512: in __call__
+    return self._hookexec(self.name, self._hookimpls.copy(), kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\pluggy\_manager.py:120: in _hookexec
+    return self._inner_hookexec(hook_name, methods, kwargs, firstresult)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\_pytest\main.py:456: in pytest_ignore_collect
+    norecursepatterns = config.getini("norecursedirs")
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\_pytest\config\__init__.py:1662: in getini
+    self._inicache[canonical_name] = val = self._getini(canonical_name)
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\_pytest\config\__init__.py:1704: in _getini
+    return self._getini_ini(name, canonical_name, type, value, default)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\site-packages\_pytest\config\__init__.py:1746: in _getini_ini
+    return shlex.split(value) if isinstance(value, str) else value
+           ^^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\shlex.py:313: in split
+    return list(lex)
+           ^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\shlex.py:300: in __next__
+    token = self.get_token()
+            ^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\shlex.py:109: in get_token
+    raw = self.read_token()
+          ^^^^^^^^^^^^^^^^^
+..\..\..\..\.pyenv\pyenv-win\versions\3.13.3\Lib\shlex.py:191: in read_token
+    raise ValueError("No closing quotation")
+E   ValueError: No closing quotation
+=========================== short test summary info ===========================
+ERROR tests - ValueError: No closing quotation
+!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+============================== 1 error in 0.21s ===============================
+</file>
+
+<file path="README.md">
+# comfyui-comfyui-lmstudio
+
+These custom nodes acts as a bidirectional bridge between ComfyUI's synchronous/tensor-based ecosystem and LM Studio's asynchronous/text-based inference engine.
+
+> [!NOTE]
+> This projected was created with a [cookiecutter](https://github.com/Comfy-Org/cookiecutter-comfy-extension) template. It helps you start writing custom nodes without worrying about the Python setup.
+
+## Quickstart
+
+1. Install [ComfyUI](https://docs.comfy.org/get_started).
+1. Install [ComfyUI-Manager](https://github.com/ltdrdata/ComfyUI-Manager)
+1. Look up this extension in ComfyUI-Manager. If you are installing manually, clone this repository under `ComfyUI/custom_nodes`.
+1. Restart ComfyUI.
+
+# Features
+
+- A list of features
+
+## Develop
+
+To install the dev dependencies and pre-commit (will run the ruff hook), do:
+
+```bash
+cd comfyui-lmstudio
+pip install -e .[dev]
+pre-commit install
+```
+
+The `-e` flag above will result in a "live" install, in the sense that any changes you make to your node extension will automatically be picked up the next time you run ComfyUI.
+
+## Publish to Github
+
+Install Github Desktop or follow these [instructions](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) for ssh.
+
+1. Create a Github repository that matches the directory name.
+2. Push the files to Git
+
+```
+git add .
+git commit -m "project scaffolding"
+git push
+```
+
+## Writing custom nodes
+
+An example custom node is located in [node.py](src/comfyui-lmstudio/nodes.py). To learn more, read the [docs](https://docs.comfy.org/essentials/custom_node_overview).
+
+## Tests
+
+This repo contains unit tests written in Pytest in the `tests/` directory. It is recommended to unit test your custom node.
+
+- [build-pipeline.yml](.github/workflows/build-pipeline.yml) will run pytest and linter on any open PRs
+- [validate.yml](.github/workflows/validate.yml) will run [node-diff](https://github.com/Comfy-Org/node-diff) to check for breaking changes
+
+## Publishing to Registry
+
+If you wish to share this custom node with others in the community, you can publish it to the registry. We've already auto-populated some fields in `pyproject.toml` under `tool.comfy`, but please double-check that they are correct.
+
+You need to make an account on https://registry.comfy.org and create an API key token.
+
+- [ ] Go to the [registry](https://registry.comfy.org). Login and create a publisher id (everything after the `@` sign on your registry profile).
+- [ ] Add the publisher id into the pyproject.toml file.
+- [ ] Create an api key on the Registry for publishing from Github. [Instructions](https://docs.comfy.org/registry/publishing#create-an-api-key-for-publishing).
+- [ ] Add it to your Github Repository Secrets as `REGISTRY_ACCESS_TOKEN`.
+
+A Github action will run on every git push. You can also run the Github action manually. Full instructions [here](https://docs.comfy.org/registry/publishing). Join our [discord](https://discord.com/invite/comfyorg) if you have any questions!
+</file>
+
+<file path="specs/API_AND_DATA_CONTRACTS.md">
+# API_AND_DATA_CONTRACTS.md
+
+**Target Audience:** AI Coding Assistant
+**Purpose:** This document strictly defines the data structures, transformations, and network payloads required to bridge ComfyUI and LM Studio. Rely on these exact schemas to prevent hallucinating incorrect tensor shapes or API payloads.
+
+## Contract 1: ComfyUI Image Tensors -> Base64 Strings
+
+ComfyUI passes images into the `execute` method as PyTorch Tensors. LM Studio expects Base64 encoded JPEG/PNG strings.
+
+- **ComfyUI Input Format:** `torch.Tensor` of shape `[Batch, Height, Width, Channels]`.
+- **Data Type:** `torch.float32` ranging from `0.0` to `1.0`.
+- **Channels:** Usually 3 (RGB).
+- **Required Transformation Logic (in `utils.py`):**
+    1. Check if the tensor is `None`. If so, skip.
+    2. Extract the first image from the batch: `img_tensor = tensor[0]`.
+    3. Scale values: `(img_tensor.cpu().numpy() * 255.0).clip(0, 255).astype(np.uint8)`.
+    4. Convert to PIL: `Image.fromarray(img_np)`.
+    5. Save to `io.BytesIO()` as `"JPEG"`.
+    6. Base64 encode and prepend standard URI: `return f"data:image/jpeg;base64,{encoded_string}"`
+
+## Contract 2: LM Studio REST API Request Payload
+
+When `connection_mode == "REST API"`, you must construct a payload that matches the `POST /api/v1/chat` (OpenAI-compatible) endpoint.
+
+**Target URL:** `http://127.0.0.1:1234/api/v1/chat`
+
+**Text-Only Payload:**
+
+```json
+{
+    "model": "<model_id>",
+    "messages": [
+        {
+            "role": "user",
+            "content": "<prompt>"
+        }
+    ],
+    "temperature": 0.7,
+    "max_tokens": -1,
+    "stream": true
+}
+```
+
+**Multimodal (Text + Image) Payload:**
+
+```json
+{
+    "model": "<model_id>",
+    "messages": [
+        {
+            "role": "user",
+            "content": [
+                { "type": "text", "text": "<prompt>" },
+                {
+                    "type": "image_url",
+                    "image_url": { "url": "data:image/jpeg;base64,..." }
+                }
+            ]
+        }
+    ],
+    "temperature": 0.7,
+    "max_tokens": -1,
+    "stream": true
+}
+```
+
+## Contract 3: LM Studio Server-Sent Events (SSE) Parsing
+
+When streaming is enabled (`"stream": true`), the REST API responds with Server-Sent Events.
+
+**Raw Stream Format:**
+
+```text
+data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"},"finish_reason":null}]}
+\n
+data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"reasoning_content":"Thinking..."},"finish_reason":null}]}
+```
+
+**Parsing Logic Requirements (REST Mode):**
+
+1. Read the async response line by line.
+2. If line starts with `data: `, strip the prefix and parse the JSON.
+3. If `line.strip() == "data: [DONE]"`, break the loop.
+4. Extract text: `chunk_json.get("choices", [{}])[0].get("delta", {}).get("content", "")`
+5. Extract reasoning (DeepSeek R1 style): `chunk_json.get("choices", [{}])[0].get("delta", {}).get("reasoning_content", "")`
+
+**Parsing Logic Requirements (SDK Mode):**
+If using the `lmstudio-python` SDK (`AsyncClient`):
+
+1. `async for chunk in stream:`
+2. Standard text condition: `if chunk.type == "message.delta":` -> use `chunk.content`.
+3. Reasoning condition: `if chunk.type == "reasoning.delta":` -> use `chunk.content`.
+
+## Contract 4: Python -> JS WebSocket Protocol
+
+To stream text into the ComfyUI frontend without blocking, the Python backend must dispatch events using `PromptServer`.
+
+**Python Sender Requirement (in `client.py`):**
+
+```python
+from server import PromptServer
+
+def send_ws_update(node_id: str, chunk_type: str, content: str):
+    # chunk_type must be either "clear", "text", or "reasoning"
+    PromptServer.instance.send_sync("lmstudio.stream.update", {
+        "node_id": node_id,
+        "chunk_type": chunk_type,
+        "content": content
+    })
+```
+
+**JavaScript Receiver Requirement (in `web/js/lmstudio_ui.js`):**
+
+```javascript
+import { api } from "../../scripts/api.js";
+
+api.addEventListener("lmstudio.stream.update", (event) => {
+    const { node_id, chunk_type, content } = event.detail;
+    // 1. Get the node from app.graph.getNodeById(node_id)
+    // 2. Locate your custom text widget on that node
+    // 3. If chunk_type === "clear", set node.displayWidget.value = ""
+    // 4. Otherwise, append the content appropriately
+    // 5. Force a UI redraw: app.graph.setDirtyCanvas(true, false);
+});
+```
+</file>
+
+<file path="specs/blueprint.md">
+# Architectural Blueprint: ComfyUI LM Studio Node
+
+## 1. System Overview & Data Flow
+
+The system acts as a bidirectional bridge between ComfyUI's synchronous/tensor-based ecosystem and LM Studio's asynchronous/text-based inference engine.
+
+**The Execution Flow:**
+
+1.  **Input Ingestion:** The node receives user inputs (Text Prompt, Configs) and conditionally accepts Image Tensors from upstream ComfyUI nodes.
+2.  **Data Transformation:** PyTorch Image Tensors are converted into optimized Base64 JPEG strings in memory.
+3.  **Payload Routing:** Based on the user's selected `connection_mode`, the request is routed either through the native `lmstudio-python` SDK or a raw HTTP REST client (`aiohttp`).
+4.  **Streaming & UI Updates:** As LM Studio generates tokens, the backend intercepts them and pushes them over ComfyUI's WebSocket to a custom JavaScript extension, updating the node's UI in real-time.
+5.  **Finalization:** Once complete, the node aggregates the text, reasoning tokens, and execution statistics, passing them to downstream ComfyUI nodes.
+
+---
+
+## 2. Project Directory Structure
+
+A flat, modular structure ensures code readability without unnecessary abstraction.
+
+```text
+ComfyUI-LMStudio-Node/
+│
+├── __init__.py               # Node registration and entry point
+├── node.py                   # Core ComfyUI V3 Node definition
+├── client.py                 # Dual-mode execution engine (SDK & REST API)
+├── utils.py                  # Tensor-to-Base64 conversion and helpers
+└── web/
+    └── js/
+        └── lmstudio_ui.js    # Frontend extension for real-time streaming
+```
+
+---
+
+## 3. Core Components Breakdown
+
+### 3.1. The Orchestration Layer (`node.py`)
+
+This component uses ComfyUI's modern V3 API schema (`comfy_api.latest.io`). It defines the visual representation of the node and acts as the traffic controller.
+
+**Design Decisions:**
+
+- **Unified Interface:** A single node uses an `optional` image input. If no image is connected, it behaves as a standard LLM. If connected, it formats a multimodal payload.
+- **Lazy Evaluation:** The image input is marked as `lazy=True`. If the node is bypassed, the heavy upstream image generation (e.g., Stable Diffusion) is skipped, saving compute.
+
+**Schema Specification:**
+
+- **Inputs:**
+    - `prompt` (String, multiline=True): The user's query.
+    - `image` (Image, optional=True, lazy=True): Upstream PyTorch tensor.
+    - `model_id` (String): e.g., `qwen2.5-7b-instruct`.
+    - `connection_mode` (Combo): `["SDK", "REST"]`.
+    - `server_url` (String): e.g., `http://127.0.0.1:1234` (Used if REST mode is selected).
+    - `temperature` (Float): Generation randomness [0.0 - 2.0].
+    - `max_tokens` (Int): Generation limit (-1 for infinite).
+    - `debug_mode` (Boolean): Enables verbose console logging.
+- **Hidden Inputs:**
+    - `unique_id` (Hidden): Required to target WebSocket messages to the specific UI node instance.
+- **Outputs:**
+    - `response_text` (String): The standard LLM reply.
+    - `reasoning_text` (String): The extracted "thinking" tokens (e.g., from DeepSeek R1).
+    - `statistics` (String): Formatted string containing TPS, TTFT, and Token counts.
+
+### 3.2. Data Transformation Layer (`utils.py`)
+
+LM Studio's vision models require Base64 encoded images, whereas ComfyUI passes images as PyTorch Tensors.
+
+**Processing Steps:**
+
+1.  **Extract:** ComfyUI tensors arrive as batches `[Batch, Height, Width, Channels]`. We slice `tensor[0]` to process the first image.
+2.  **Scale:** ComfyUI tensors use `float32` in the range `[0.0, 1.0]`. We multiply by 255 and cast to `uint8`.
+3.  **Encode:** Convert the Numpy array to a PIL Image, save it to an in-memory `BytesIO` buffer as a JPEG (to minimize API payload size compared to PNG), and apply Base64 encoding.
+
+### 3.3. Dual-Mode Execution Engine (`client.py`)
+
+To satisfy the "Dual Mode Support" requirement without over-engineering, we use a single asynchronous router function that branches based on the connection mode.
+
+**Mode A: LM Studio SDK (Recommended)**
+
+- **Technology:** `lmstudio-python` via `AsyncClient`.
+- **Flow:**
+    1. Initialize `lms.AsyncClient()`.
+    2. Request a model handle via `await client.llm.model(model_id)`.
+    3. Invoke `await model.respond_stream(messages, config)`.
+    4. Iterate asynchronously: `async for chunk in stream:`.
+    5. Check `chunk.type`. If `"reasoning.delta"`, route to the reasoning UI. If `"message.delta"`, route to the main text UI.
+    6. Call `stream.result().stats` to extract built-in real-time statistics (Tokens Per Second, Time To First Token).
+
+**Mode B: REST API (Fallback/Remote Server)**
+
+- **Technology:** `aiohttp.ClientSession`.
+- **Flow:**
+    1. Format the payload conforming to OpenAI's `/v1/chat/completions` specification.
+    2. Open an async POST request with `stream=True`.
+    3. Read the stream line-by-line (`async for line in response.content:`).
+    4. Parse the Server-Sent Events (SSE) removing the `data: ` prefix.
+    5. Inspect the JSON deltas. Look for `delta.content` (normal text) and `delta.reasoning_content` (thinking tokens).
+    6. _Note on Stats:_ In REST mode, calculate Time To First Token (TTFT) and Tokens Per Second (TPS) manually using Python's `time.time()`.
+
+### 3.4. Communication & Real-time Visualization (`web/js/lmstudio_ui.js`)
+
+To prevent ComfyUI from freezing during a 30-second text generation, we must decouple the generation process from the UI rendering using WebSockets.
+
+**Backend Dispatch (Python):**
+Inside the streaming loop in `client.py`, the backend calls:
+`PromptServer.instance.send_sync("lmstudio_node_update", payload)`
+The payload contains the `node_id`, `chunk_type` ("text" or "reasoning"), and the `text_chunk`.
+
+**Frontend Reception (JavaScript):**
+
+1.  **Registration:** Use `app.registerExtension` to hook into ComfyUI's startup.
+2.  **Widget Injection:** During `beforeRegisterNodeDef`, intercept the creation of the LM Studio node and inject a custom read-only multi-line textarea widget directly onto the node canvas.
+3.  **Event Listener:** Hook into `api.addEventListener("lmstudio_node_update", ...)`.
+4.  **DOM Manipulation:** When an event fires, find the node by `node_id`.
+    - If `chunk_type` is "reasoning", prepend a brain/thought bubble emoji (💭) and append the text in italicized format (or simply append to a dedicated reasoning widget).
+    - If `chunk_type` is "text", append normally.
+    - Call `app.graph.setDirtyCanvas(true, false)` to force LiteGraph to visually update the node without halting the main thread.
+
+---
+
+## 4. Execution Flow Diagram
+
+This represents a single, complete lifecycle of the node during a ComfyUI prompt execution.
+
+1.  **`execute()` triggered** in `node.py`.
+2.  Check for `image`. If present, pass to `utils.py` -> receive `base64_string`.
+3.  Build `messages` array.
+4.  Clear previous text widgets on the frontend via an initial WebSocket "clear" message.
+5.  Call `client.py -> generate_response()`.
+6.  `generate_response()` connects to LM Studio (via SDK or REST).
+7.  **[Streaming Loop Begins]**
+    - Receive token chunk.
+    - Identify as standard text or thinking token.
+    - Send WebSocket event `lmstudio_node_update` to frontend.
+    - Frontend JS updates the node's textarea widget.
+8.  **[Streaming Loop Ends]**
+    - Extract execution stats (TPS, Input/Output Token counts).
+    - Log to console if `debug_mode == True`.
+9.  Aggregate full strings.
+10. Return `io.NodeOutput(response_text, reasoning_text, stats)`.
+11. Downstream ComfyUI nodes receive the generated strings.
+
+---
+
+## 5. Implementation Considerations & Best Practices
+
+To ensure this node is robust within the ComfyUI ecosystem, the following guardrails are integrated into the blueprint:
+
+- **Non-Blocking Network I/O:**
+  The execution method _must_ be defined as `async def execute`. Using synchronous `requests.post()` would lock the entire ComfyUI server thread, preventing users from moving nodes or seeing progress bars while the LLM generates.
+- **Error Handling Isolation:**
+  Network timeouts, LM Studio server crashes, or missing models must be caught gracefully within `client.py`. If an exception occurs, the node should catch it, print the stack trace if `debug_mode` is enabled, and return a clear `io.NodeOutput` string stating `"Error: LM Studio connection failed."` rather than crashing the ComfyUI pipeline.
+- **Hardware Symbiosis:**
+  Because ComfyUI (Image Generation) and LM Studio (Text Generation) often share the same GPU, the node allows LM Studio to manage its VRAM natively via the REST/SDK defaults. By keeping the node architecture strictly to API communication, it avoids manual PyTorch memory collisions.
+</file>
+
+<file path="specs/CODING_STANDARDS_AND_TESTING.md">
+# CODING_STANDARDS_AND_TESTING.md
+
+**Target Audience:** AI Coding Assistant
+**Purpose:** Your code will be evaluated by an automated GitHub Actions pipeline. The `pyproject.toml` defines highly strict rules for `ruff` (linting) and `mypy` (type checking). If you violate these rules, the build will fail.
+
+## 1. Strict Typing Rules (`mypy`)
+
+The `pyproject.toml` is configured with `strict = true`, `warn_unreachable = true`, and `warn_no_return = true`.
+
+**Rules:**
+
+- **Every function must have type hints** for both arguments and return values.
+- **Use modern union types:** Use `X | None` instead of `Optional[X]`.
+- **`kwargs` must be typed:** Use `**kwargs: typing.Any`.
+- **No missing returns:** If a function does not return a value, explicitly type it as `-> None`.
+
+**Correct Example:**
+
+```python
+import typing
+import torch
+from comfy_api.latest import io
+
+@classmethod
+async def execute(cls, prompt: str, model_id: str, temperature: float,
+                  max_tokens: int, debug_mode: bool, image: torch.Tensor | None = None,
+                  **kwargs: typing.Any) -> io.NodeOutput:
+    pass
+```
+
+## 2. Linting & Code Quality (`ruff`)
+
+The `pyproject.toml` enforces strict Ruff linting, explicitly checking for the `S` (flake8-bandit) and `F` (Pyflakes) rules.
+
+**Rules:**
+
+- **NO `eval()` or `exec()`:** Rules `S102` and `S307` will instantly fail the build if you use `exec` or `eval`. Use `json.loads()` for parsing.
+- **Line length limit:** Keep lines under 140 characters.
+- **Double quotes:** You must use double quotes `" "` for strings, not single quotes `' '` (enforced by `inline-quotes = "double"`).
+- **No unused imports:** Clean up your imports. `Ruff` will fail if there is an unused import.
+
+## 3. Asynchronous Programming Constraints
+
+ComfyUI operates an asynchronous web server. Blocking the main thread will cause the entire UI to freeze for the user.
+
+**Rules:**
+
+- **Never use `requests`:** The `requests` module is synchronous.
+- **Always use `aiohttp` or `AsyncClient`:** When calling LM Studio's REST API, you must use `aiohttp.ClientSession`. When using the SDK, use `lms.AsyncClient()`.
+- **Never use `time.sleep()`:** If you need a delay, use `await asyncio.sleep()`.
+
+## 4. Testing Strategy (`pytest`)
+
+The CI pipeline runs `pytest tests/`. The runner does _not_ have an LM Studio server running, nor does it have a full ComfyUI runtime initialized.
+
+**Rules:**
+
+- **Mock Network Calls:** You must use `unittest.mock.AsyncMock` or `unittest.mock.patch` to mock outgoing calls to LM Studio. Do not attempt actual network requests in tests.
+- **Mock ComfyUI Server:** As shown in `WEBSOCKET_PROTOCOL.md`, testing environments will not have `server.PromptServer` initialized. Ensure your code safely falls back if `PromptServer` is missing.
+- **Test Async Functions:** Because your `execute` function and client generation functions are `async`, you must mark your pytest functions with `@pytest.mark.asyncio`. (Note: Make sure `pytest-asyncio` is added to your dev dependencies if it isn't already).
+
+**Test Example (`tests/test_client.py`):**
+
+```python
+import pytest
+from unittest.mock import AsyncMock, patch
+from src.lmstudio.client import generate_response
+
+@pytest.mark.asyncio
+async def test_generate_response_sdk_mode() -> None:
+    # Arrange
+    prompt = "Hello"
+    model_id = "test-model"
+
+    # We must mock the lmstudio AsyncClient so it doesn't make real requests
+    with patch("lmstudio.AsyncClient") as MockClient:
+        # Setup the mock chain to return a fake stream/result
+        mock_instance = MockClient.return_value.__aenter__.return_value
+        mock_model = AsyncMock()
+        mock_instance.llm.model = AsyncMock(return_value=mock_model)
+
+        # Act
+        # (Assuming generate_response is an async function in your client.py)
+        # text, reasoning, stats = await generate_response(...)
+
+        # Assert
+        # assert mock_instance.llm.model.called
+```
+
+## Summary Checklist for AI:
+
+1. [ ] Did I use double quotes for all strings?
+2. [ ] Are all my function signatures fully type-hinted?
+3. [ ] Are my LM Studio API calls explicitly asynchronous (`aiohttp` / `AsyncClient`)?
+4. [ ] Did I write `@pytest.mark.asyncio` tests that mock the network?
+5. [ ] Did I avoid `eval` and `exec` entirely?
+</file>
+
+<file path="specs/Implementation_Plan.md">
+Here is the complete, highly detailed `IMPLEMENTATION_PLAN.md`.
+
+Save this file in your project (e.g., in a `.docs/` or `.github/` folder) and provide it to your AI coding assistant. Instruct the AI to "Execute Phase 1," and only proceed to the next phase when the current one is fully completed and tested.
+
+---
+
+# IMPLEMENTATION_PLAN.md
+
+**Role:** You are an expert Python and JavaScript developer, specializing in ComfyUI Custom Nodes (specifically the V3 `comfy_api.latest` architecture) and the LM Studio API.
+**Task:** Execute this implementation plan step-by-step. Do not skip steps. Do not write code for future phases until the current phase is completed, linted, and reviewed.
+
+---
+
+## Phase 1: Scaffold Cleanup & Dependencies
+
+_The current scaffold is a legacy V1 boilerplate with some broken paths. We must clean this up first._
+
+- [ ] **1.1 Update `pyproject.toml`**
+    - Add the following to the `dependencies` array:
+        - `"aiohttp"` (for REST API communication)
+        - `"Pillow"` (for image processing)
+        - `"numpy"` (for tensor manipulation)
+        - `"lmstudio"` (for the official SDK)
+        - `"comfyui-frontend-package"` (for V3 frontend compatibility)
+- [ ] **1.2 Fix Root `__init__.py`**
+    - The current import is `from .src.comfyui-lmstudio.nodes import ...`. This is incorrect.
+    - Update it to reflect V3 architecture: remove `NODE_CLASS_MAPPINGS` and `NODE_DISPLAY_NAME_MAPPINGS`.
+    - Simply import the V3 entry point: `from .src.lmstudio.nodes import comfy_entrypoint`.
+    - Keep `WEB_DIRECTORY = "./web"`.
+    - Ensure `__all__ = ["comfy_entrypoint", "WEB_DIRECTORY"]`.
+- [ ] **1.3 Clean `src/lmstudio/nodes.py`**
+    - Delete the legacy `Example` class and its V1 dictionaries (`NODE_CLASS_MAPPINGS`, etc.).
+    - Leave the file completely blank, ready for V3 implementation.
+- [ ] **1.4 Clean Tests**
+    - Delete or clear out `tests/test_lmstudio.py` so the CI doesn't fail on the missing `Example` class.
+
+---
+
+## Phase 2: Data Utilities (`src/lmstudio/utils.py`)
+
+_LM Studio expects Base64 images; ComfyUI provides PyTorch Tensors. This module bridges that gap._
+
+- [ ] **2.1 Create `src/lmstudio/utils.py`**
+- [ ] **2.2 Implement `tensor_to_base64(tensor)`**
+    - **Input:** A PyTorch Tensor of shape `[B, H, W, C]` with `float32` values from `0.0` to `1.0`.
+    - **Processing:**
+        - Extract the first image: `image_tensor = tensor[0]`.
+        - Multiply by `255.0`, clip to `0, 255`, and cast to `numpy.uint8`.
+        - Convert to `PIL.Image`.
+        - Save to an `io.BytesIO` buffer using format `"JPEG"` (quality ~85 to save payload size).
+        - Base64 encode the buffer.
+    - **Output:** A string formatted as `data:image/jpeg;base64,<encoded_string>`.
+- [ ] **2.3 Add strict type hints**
+    - Ensure `import torch` and proper type hinting (e.g., `tensor: torch.Tensor -> str`).
+- [ ] **2.4 Write Tests (`tests/test_utils.py`)**
+    - Create a mock tensor `torch.zeros((1, 512, 512, 3), dtype=torch.float32)`.
+    - Assert that the output is a string and starts with `"data:image/jpeg;base64,"`.
+
+---
+
+## Phase 3: Execution Engine (`src/lmstudio/client.py`)
+
+_This module handles dual-mode async communication with LM Studio (SDK and REST)._
+
+- [ ] **3.1 Create `src/lmstudio/client.py`**
+- [ ] **3.2 Implement WebSocket Dispatcher**
+    - Create an async or synchronous helper function `send_ws_update(node_id: str, chunk_type: str, content: str)`.
+    - It must use `from server import PromptServer` and call:
+      `PromptServer.instance.send_sync("lmstudio.stream.update", {"node_id": node_id, "chunk_type": chunk_type, "content": content})`
+- [ ] **3.3 Implement the `LMStudioSDKClient`**
+    - Use `import lmstudio as lms`.
+    - Create a method `async def generate(...)` that accepts `model_id`, `messages_array`, `temperature`, `max_tokens`, and `node_id`.
+    - Use `async with lms.AsyncClient() as client:`.
+    - Load the model: `model = await client.llm.model(model_id)`.
+    - Stream the response: `stream = await model.respond_stream(messages, config={...})`.
+    - Iterate the stream (`async for chunk in stream:`):
+        - Identify reasoning tokens (`chunk.type == "reasoning.delta"`) vs standard text (`chunk.type == "message.delta"`).
+        - Send chunks to the frontend via `send_ws_update`.
+    - Return the final accumulated text, reasoning text, and stats (TPS/TTFT from `stream.result().stats`).
+- [ ] **3.4 Implement the `LMStudioRESTClient` (Fallback)**
+    - Use `aiohttp.ClientSession`.
+    - Target `POST http://127.0.0.1:1234/api/v1/chat`.
+    - Set `"stream": True` in the JSON payload.
+    - Asynchronously read lines from the response, parse the `data: {...}` JSON blocks (SSE).
+    - Extract `delta.content` and `delta.reasoning_content`.
+    - Call `send_ws_update` appropriately.
+    - _Note: Implement a fallback calculation for Tokens Per Second if stats aren't provided by the SSE stream._
+
+---
+
+## Phase 4: ComfyUI V3 Node Implementation (`src/lmstudio/nodes.py`)
+
+_Defining the actual node using ComfyUI's modern V3 API._
+
+- [ ] **4.1 Imports and Setup**
+    - `from comfy_api.latest import io, ui, ComfyNode, ComfyExtension`
+    - Import the client functions from `client.py` and `tensor_to_base64` from `utils.py`.
+- [ ] **4.2 Define `LMStudioChatNode`**
+    - Inherit from `io.ComfyNode`.
+    - Implement `@classmethod def define_schema(cls) -> io.Schema:`
+        - `node_id="LMStudio_Unified_Chat"`, `display_name="LM Studio Chat"`.
+        - **Inputs:**
+            - `prompt`: `io.String.Input(multiline=True)`
+            - `image`: `io.Image.Input(optional=True, lazy=True)`
+            - `model_id`: `io.String.Input(default="local-model")`
+            - `connection_mode`: `io.Combo.Input(options=["SDK", "REST API"])`
+            - `temperature`: `io.Float.Input(default=0.7)`
+            - `max_tokens`: `io.Int.Input(default=-1)`
+        - **Hidden:**
+            - `io.Hidden.unique_id` (Crucial for linking the backend stream to the frontend widget).
+        - **Outputs:**
+            - `text`: `io.String.Output()`
+            - `reasoning`: `io.String.Output()`
+            - `stats`: `io.String.Output()`
+- [ ] **4.3 Implement Lazy Evaluation**
+    - Create `@classmethod def check_lazy_status(cls, image, **kwargs) -> list[str]:`
+    - If `image` is `None` but the user provided an image connection, do _not_ require it unless a specific toggle is set, or simply return `[]` to accept it as missing. (Follow `lazy_evaluation.mdx` logic).
+- [ ] **4.4 Implement `execute` Method**
+    - `@classmethod async def execute(cls, prompt: str, connection_mode: str, model_id: str, temperature: float, max_tokens: int, image: torch.Tensor | None = None, **kwargs) -> io.NodeOutput:`
+    - **Logic:**
+        1. Extract `node_id = cls.hidden.unique_id`.
+        2. Build the `messages` payload. If `image` exists, use `tensor_to_base64` and format as a multimodal vision message.
+        3. Route to the correct client based on `connection_mode`.
+        4. Return `io.NodeOutput(final_text, final_reasoning, stats_string)`.
+- [ ] **4.5 Extension Entrypoint**
+    - Create class `LMStudioExtension(ComfyExtension)`.
+    - `async def get_node_list(self): return [LMStudioChatNode]`
+    - `async def comfy_entrypoint() -> ComfyExtension: return LMStudioExtension()`
+
+---
+
+## Phase 5: Real-time UI (Frontend Extension)
+
+_Capturing the WebSocket stream to display text live on the node canvas._
+
+- [ ] **5.1 Create `web/js/lmstudio_ui.js`**
+- [ ] **5.2 Register Extension**
+    - `import { app } from "../../scripts/app.js";`
+    - `import { api } from "../../scripts/api.js";`
+    - `app.registerExtension({ name: "LMStudio.UnifiedChat", ... })`
+- [ ] **5.3 Inject Custom Widget (`beforeRegisterNodeDef`)**
+    - Check if `nodeData.name === "LMStudio_Unified_Chat"`.
+    - Override `onNodeCreated`:
+        - Add a custom multiline text widget to the node: `this.displayWidget = this.addWidget("text", "Output Stream", "", "output");`
+        - Ensure it is read-only.
+- [ ] **5.4 Handle WebSocket Event (`setup`)**
+    - Listen for `"lmstudio.stream.update"` via `api.addEventListener`.
+    - Extract `node_id`, `chunk_type`, and `content`.
+    - Locate the node: `const node = app.graph.getNodeById(node_id);`
+    - If found, append the text to `node.displayWidget.value`.
+    - If `chunk_type === "reasoning"`, optionally prepend a "💭" or format differently.
+    - Call `app.graph.setDirtyCanvas(true, false)` to visually update the node immediately.
+
+---
+
+## Phase 6: Code Quality & Testing
+
+_Ensuring the code passes the strict requirements defined in `pyproject.toml`._
+
+- [ ] **6.1 Linting**
+    - Run `ruff check . --fix`. Ensure no `eval` or `exec` calls exist.
+- [ ] **6.2 Type Checking**
+    - Run `mypy .`. Fix any missing type hints (Strict mode is enabled).
+- [ ] **6.3 Write Node Execution Test (`tests/test_lmstudio.py`)**
+    - Use `unittest.mock.AsyncMock` or `pytest-asyncio`.
+    - Mock the `send_ws_update` function.
+    - Mock the `BaseLMClient` so no real network requests are made.
+    - Test that `LMStudioChatNode.execute()` correctly parses inputs and returns a formatted `io.NodeOutput`.
+- [ ] **6.4 Final Build Check**
+    - Ensure the GitHub Action `.github/workflows/build-pipeline.yml` will pass.
+</file>
+
+<file path="specs/reference_overview.md">
+### 1. ComfyUI Backend (Orchestration & Node Definition)
+
+These files contain the specifications for building the modern V3 node, managing inputs (lazy/optional), and handling PyTorch image tensors.
+
+- **.docs/comfyui-docs/custom-nodes/v3_migration.mdx**
+    - **Why you need it:** This is the most critical file for the backend. It details the new `comfy_api.latest` V3 schema, how to inherit from `io.ComfyNode`, how to use `define_schema(cls) -> io.Schema`, and how to implement `async def execute`. It also covers how to define `io.Hidden.unique_id` which is required for targeting WebSocket updates to a specific node UI.
+- **.docs/comfyui-docs/custom-nodes/backend/lazy_evaluation.mdx**
+    - **Why you need it:** Explains how to set `lazy=True` on the optional Image input to prevent upstream image generation nodes (like a heavy SDXL workflow) from executing if the LM Studio node is currently bypassed. Includes the `check_lazy_status` implementation.
+- **.docs/comfyui-docs/custom-nodes/backend/more_on_inputs.mdx**
+    - **Why you need it:** Provides context on `Hidden and Flexible inputs`, specifically how `UNIQUE_ID` works under the hood to map the Python backend instance to the JavaScript frontend instance.
+- **.docs/comfyui-docs/custom-nodes/backend/images_and_masks.mdx**
+    - **Why you need it:** Explains that ComfyUI passes images as `torch.Tensor` with shape `[B, H, W, C]`. You will need this to correctly slice and convert the tensor array into a PIL Image and eventually a Base64 string for LM Studio's vision models.
+- **.docs/comfyui-docs/custom-nodes/backend/snippets.mdx**
+    - **Why you need it:** Contains the exact code snippet for "Load an image", showing the math required to convert `[0.0, 1.0]` float tensors back into standard images using `numpy` and `PIL.Image`.
+
+### 2. ComfyUI Server & Communication (WebSockets)
+
+These files dictate how the Python backend talks to the JavaScript frontend to stream text tokens in real-time.
+
+- **.docs/comfyui-docs/development/comfyui-server/comms_messages.mdx**
+    - **Why you need it:** Explains the `PromptServer.instance.send_sync` method. It shows how to dispatch custom message types (e.g., `"lmstudio.stream.update"`) containing the `node_id` and text chunks from the Python server to the frontend.
+- **.docs/comfyui-docs/development/comfyui-server/comms_overview.mdx**
+    - **Why you need it:** Gives a high-level overview of the `aiohttp` framework and `asyncio` architecture underlying ComfyUI, reinforcing why the `execute` method must be `async` to prevent blocking the server during API calls to LM Studio.
+
+### 3. ComfyUI Frontend (Real-Time UI & Javascript)
+
+These files guide the creation of the custom UI widget that displays the streaming text and reasoning tokens directly on the node canvas.
+
+- **.docs/comfyui-docs/custom-nodes/js/javascript_overview.mdx**
+    - **Why you need it:** Covers the basics of how to export a `WEB_DIRECTORY` from your Python `__init__.py` so ComfyUI knows to load your custom `.js` file.
+- **.docs/comfyui-docs/custom-nodes/js/javascript_hooks.mdx**
+    - **Why you need it:** Details the `beforeRegisterNodeDef` and `setup()` hooks. You will use `setup()` to listen for the WebSocket events (`api.addEventListener`), and `beforeRegisterNodeDef` to inject a custom text display widget onto the node when it is created.
+- **.docs/comfyui-docs/custom-nodes/js/javascript_objects_and_hijacking.mdx**
+    - **Why you need it:** Documents the `ComfyApp` and `ComfyNode` objects. You'll need to reference `app.graph.getNodeById()` to find the specific node receiving the text stream, and `app.graph.setDirtyCanvas(true, false)` to force the UI to repaint when new text arrives.
+
+### 4. LM Studio Execution Engine (SDK & REST API)
+
+These files define how to structure requests, handle streaming tokens, and pass multimodal (image) data to LM Studio.
+
+- **.docs/lmstudio-docs/1_python/1_getting-started/project-setup.md**
+    - **Why you need it:** Details how to import and initialize the `lmstudio` Python SDK, including setting up the `AsyncClient` for asynchronous environments.
+- **.docs/lmstudio-docs/1_python/1_llm-prediction/chat-completion.md**
+    - **Why you need it:** Contains the core reference for using `await model.respond_stream()`. Crucially, it explains how to use `async for fragment in prediction_stream:` to capture streaming chunks, and how to call `prediction_stream.result().stats` to get the tokens-per-second (TPS) and time-to-first-token (TTFT) metrics.
+- **.docs/lmstudio-docs/1_python/1_llm-prediction/image-input.md**
+    - **Why you need it:** Shows how the SDK handles Vision models. Note: Because ComfyUI provides PyTorch tensors rather than file paths, you will need to map your Base64 conversion to the appropriate format expected by the LM Studio payload (often standard OpenAI base64 data URIs).
+- **.docs/lmstudio-docs/1_developer/2_rest/chat.md**
+    - **Why you need it:** The official specification for the `POST /api/v1/chat` endpoint. You will need this to build the fallback REST API execution mode, detailing exactly how the `input` array takes both `{"type": "text"}` and `{"type": "image", "data_url": "..."}` objects.
+- **.docs/lmstudio-docs/1_developer/2_rest/streaming-events.md**
+    - **Why you need it:** Essential for parsing the REST API stream. It details the exact Server-Sent Event (SSE) structure, such as `message.delta` for standard text and `reasoning.delta` for "thinking" tokens.
+</file>
+
+<file path="specs/SCAFFOLD_REFACTORING_GUIDE.md">
+# SCAFFOLD_REFACTORING_GUIDE.md
+
+**Target Audience:** AI Coding Assistant
+**Purpose:** The current codebase contains a legacy ComfyUI V1 boilerplate. You must strictly follow this guide to refactor the codebase into the modern ComfyUI V3 architecture (`comfy_api.latest`). Do not use V1 patterns.
+
+## 🛑 What NOT To Do (Legacy Patterns to Delete)
+
+When you open `src/lmstudio/nodes.py`, you will see legacy patterns. **Delete them entirely.**
+
+- ❌ Do NOT use `@classmethod def INPUT_TYPES(s):`.
+- ❌ Do NOT use `RETURN_TYPES = ("IMAGE",)`.
+- ❌ Do NOT use `RETURN_NAMES = (...)`.
+- ❌ Do NOT use `FUNCTION = "test"`.
+- ❌ Do NOT use `NODE_CLASS_MAPPINGS` or `NODE_DISPLAY_NAME_MAPPINGS` dictionaries.
+
+## ✅ What TO Do (V3 Architecture Patterns)
+
+### 1. Fix Root `__init__.py`
+
+The current `__init__.py` has broken import paths referencing `src.comfyui-lmstudio.nodes` which does not match the actual folder structure (`src/lmstudio/nodes.py`). Furthermore, it relies on V1 mappings.
+**Rewrite `__init__.py` to exactly this:**
+
+```python
+"""Top-level package for comfyui-lmstudio."""
+
+__all__ = [
+    "comfy_entrypoint",
+    "WEB_DIRECTORY",
+]
+
+__version__ = "0.0.1"
+
+from .src.lmstudio.nodes import comfy_entrypoint
+
+WEB_DIRECTORY = "./web"
+```
+
+### 2. Base Class Inheritance
+
+All nodes must inherit from `io.ComfyNode` using the latest API.
+
+```python
+from comfy_api.latest import io, ComfyExtension, ComfyNode, ui
+
+class LMStudioChatNode(io.ComfyNode):
+    # Implementation goes here
+```
+
+### 3. Define the Schema (`define_schema`)
+
+Instead of `INPUT_TYPES`, you must implement `@classmethod def define_schema(cls) -> io.Schema:`.
+For the `LMStudioChatNode`, it must look like this:
+
+```python
+    @classmethod
+    def define_schema(cls) -> io.Schema:
+        return io.Schema(
+            node_id="LMStudio_Unified_Chat",
+            display_name="LM Studio Chat",
+            category="LM Studio",
+            inputs=[
+                io.String.Input("prompt", multiline=True),
+                io.Image.Input("image", optional=True, lazy=True),
+                io.String.Input("model_id", default="local-model"),
+                io.Combo.Input("connection_mode", options=["SDK", "REST API"]),
+                io.Float.Input("temperature", default=0.7, min=0.0, max=2.0),
+                io.Int.Input("max_tokens", default=-1, min=-1),
+                io.Boolean.Input("debug_mode", default=False)
+            ],
+            outputs=[
+                io.String.Output(display_name="text"),
+                io.String.Output(display_name="reasoning"),
+                io.String.Output(display_name="stats")
+            ],
+            hidden=[
+                io.Hidden.unique_id  # Needed for WebSocket targeting
+            ]
+        )
+```
+
+### 4. The Execution Method (`execute`)
+
+The entry point must be an asynchronous class method named exactly `execute` that returns an `io.NodeOutput`.
+
+```python
+    @classmethod
+    async def execute(cls, prompt: str, model_id: str, connection_mode: str,
+                      temperature: float, max_tokens: int, debug_mode: bool,
+                      image=None, **kwargs) -> io.NodeOutput:
+
+        node_id = cls.hidden.unique_id
+
+        # ... logic ...
+
+        return io.NodeOutput(final_text, final_reasoning, stats_json)
+```
+
+### 5. Extension Entrypoint (`comfy_entrypoint`)
+
+At the bottom of `src/lmstudio/nodes.py`, you must define the `ComfyExtension` that replaces `NODE_CLASS_MAPPINGS`.
+
+```python
+class LMStudioExtension(ComfyExtension):
+    async def get_node_list(self) -> list[type[io.ComfyNode]]:
+        return [LMStudioChatNode]
+
+async def comfy_entrypoint() -> LMStudioExtension:
+    return LMStudioExtension()
+```
+</file>
+
+<file path="specs/WEBSOCKET_PROTOCOL.md">
+Here are the complete, highly detailed `WEBSOCKET_PROTOCOL.md` and `CODING_STANDARDS_AND_TESTING.md` documents.
+
+Save these in your `.docs/assistant_guides/` folder alongside the others. They are designed to give the AI assistant explicit boundaries for real-time frontend/backend communication and strict adherence to your repository's CI/CD pipeline.
+
+---
+
+# WEBSOCKET_PROTOCOL.md
+
+**Target Audience:** AI Coding Assistant
+**Purpose:** This document strictly defines the real-time communication pipeline between the ComfyUI Python Backend and the ComfyUI JavaScript Frontend. Because LLM generation is slow, we must stream tokens to the UI via WebSockets to prevent the user experience from freezing.
+
+## 1. Event Definitions
+
+We define two custom WebSocket events for this node:
+
+1.  `"lmstudio.stream.clear"`: Sent at the very beginning of an `execute` call to clear the frontend widget of previous text.
+2.  `"lmstudio.stream.update"`: Sent continuously as chunks arrive from the LM Studio API.
+
+### Payload Schema
+
+```json
+// For "lmstudio.stream.update"
+{
+  "node_id": "15",              // Must match the node's UNIQUE_ID
+  "chunk_type": "text",         // Either "text" or "reasoning"
+  "content": "Hello world"      // The text fragment
+}
+
+// For "lmstudio.stream.clear"
+{
+  "node_id": "15"
+}
+```
+
+## 2. Python Backend Implementation (Sender)
+
+In `src/lmstudio/client.py` (or `utils.py`), implement a helper class or function to safely dispatch these messages.
+
+**Constraints:**
+
+- You must import `PromptServer` from ComfyUI's core.
+- In testing environments, `PromptServer` might not exist. You must handle `ImportError` gracefully so `pytest` doesn't crash.
+
+**Implementation Standard:**
+
+```python
+import typing
+
+# Graceful fallback for Pytest environments
+try:
+    from server import PromptServer
+    _server_available = True
+except ImportError:
+    _server_available = False
+
+def send_ws_clear(node_id: str) -> None:
+    if _server_available and PromptServer.instance is not None:
+        PromptServer.instance.send_sync("lmstudio.stream.clear", {"node_id": node_id})
+
+def send_ws_update(node_id: str, chunk_type: str, content: str) -> None:
+    if _server_available and PromptServer.instance is not None:
+        PromptServer.instance.send_sync("lmstudio.stream.update", {
+            "node_id": node_id,
+            "chunk_type": chunk_type,
+            "content": content
+        })
+```
+
+## 3. JavaScript Frontend Implementation (Receiver)
+
+In `web/js/lmstudio_ui.js`, you must register a ComfyUI extension that injects a text display widget into the node and listens for the WebSocket events.
+
+**Constraints:**
+
+- **Do not use generic `alert()` or `console.log()`** as the primary output. You must update the node visually.
+- **Prevent Canvas Freezing:** Use `app.graph.setDirtyCanvas(true, false)` to visually update the node without halting the main thread.
+
+**Implementation Standard:**
+
+```javascript
+import { app } from "../../scripts/app.js";
+import { api } from "../../scripts/api.js";
+
+app.registerExtension({
+    name: "LMStudio.UnifiedChat",
+
+    // 1. Inject the custom widget when the node is created
+    async beforeRegisterNodeDef(nodeType, nodeData, app) {
+        if (nodeData.name === "LMStudio_Unified_Chat") {
+            const onNodeCreated = nodeType.prototype.onNodeCreated;
+            nodeType.prototype.onNodeCreated = function () {
+                if (onNodeCreated) {
+                    onNodeCreated.apply(this, arguments);
+                }
+
+                // Add a read-only multiline text widget for streaming display
+                this.displayWidget = this.addWidget(
+                    "customtext",
+                    "Stream",
+                    "",
+                    "output",
+                );
+                // Optional: set widget properties so it doesn't try to serialize back to Python
+                this.displayWidget.serialize = false;
+            };
+        }
+    },
+
+    // 2. Setup the WebSocket listeners
+    async setup() {
+        // Handle Clear Event
+        api.addEventListener("lmstudio.stream.clear", (event) => {
+            const { node_id } = event.detail;
+            const node = app.graph.getNodeById(node_id);
+            if (node && node.displayWidget) {
+                node.displayWidget.value = "";
+                app.graph.setDirtyCanvas(true, false);
+            }
+        });
+
+        // Handle Stream Update Event
+        api.addEventListener("lmstudio.stream.update", (event) => {
+            const { node_id, chunk_type, content } = event.detail;
+            const node = app.graph.getNodeById(node_id);
+            if (node && node.displayWidget) {
+                // Prepend a thought bubble for reasoning tokens
+                const prefix = chunk_type === "reasoning" ? "💭 " : "";
+
+                // Append text to the widget
+                if (node.displayWidget.value === undefined)
+                    node.displayWidget.value = "";
+                node.displayWidget.value += prefix + content;
+
+                // Redraw the canvas to show the new text
+                app.graph.setDirtyCanvas(true, false);
+            }
+        });
+    },
+});
+```
+</file>
+
+<file path="src/lmstudio/client.py">
+import base64
+import json
+import time
+import aiohttp
+import lmstudio as lms
+
+_server_available = False
+try:
+    from server import PromptServer  # type: ignore
+    _server_available = True
+except ImportError:
+    pass
+
+def send_ws_update(node_id: str, chunk_type: str, content: str) -> None:
+    """Helper function to send websocket updates to the ComfyUI frontend."""
+    if not _server_available or PromptServer.instance is None:
+        return
+    # Try sending via PromptServer instance
+    try:
+        PromptServer.instance.send_sync(
+            "lmstudio.stream.update", 
+            {
+                "node_id": node_id, 
+                "chunk_type": chunk_type, 
+                "content": content
+            }
+        )
+    except Exception as e:
+        print(f"Failed to send WS update: {e}")
+
+class LMStudioSDKClient:
+    """Client for connecting via the official LM Studio SDK."""
+
+    @staticmethod
+    async def generate(model_id: str, prompt: str, base64_image: str | None, temperature: float, max_tokens: int, node_id: str) -> tuple[str, str, str]:
+        send_ws_update(node_id, "clear", "")
+        final_text = ""
+        final_reasoning = ""
+
+        config = {
+            "temperature": temperature,
+        }
+        if max_tokens > 0:
+            config["max_tokens"] = max_tokens
+
+        try:
+            async with lms.AsyncClient() as client:
+                model = await client.llm.model(model_id)
+                chat = lms.Chat()
+                
+                if base64_image:
+                    # Strip the data URI prefix if present and decode base64
+                    encoded_str = base64_image.split(",")[1] if "," in base64_image else base64_image
+                    image_bytes = base64.b64decode(encoded_str)
+                    image_handle = await client.files.prepare_image(image_bytes)
+                    chat.add_user_message(prompt, images=[image_handle])
+                else:
+                    chat.add_user_message(prompt)
+
+                stream = await model.respond_stream(chat, config=config)
+
+                async for chunk in stream:
+                    if chunk.type == "reasoning.delta":
+                        final_reasoning += chunk.content
+                        send_ws_update(node_id, "reasoning", chunk.content)
+                    elif chunk.type == "message.delta":
+                        final_text += chunk.content
+                        send_ws_update(node_id, "text", chunk.content)
+
+                stats = stream.result().stats
+                stats_str = f"TPS: {stats.tokens_per_second:.2f}, TTFT: {stats.time_to_first_token:.2f}s"
+
+                return final_text, final_reasoning, stats_str
+        except Exception as e:
+            return f"Error: LM Studio connection failed. {str(e)}", "", "{}"
+
+class LMStudioRESTClient:
+    """Fallback client for connecting via raw REST API."""
+
+    @staticmethod
+    async def generate(server_url: str, model_id: str, prompt: str, base64_image: str | None, temperature: float, max_tokens: int, node_id: str) -> tuple[str, str, str]:
+        send_ws_update(node_id, "clear", "")
+        final_text = ""
+        final_reasoning = ""
+
+        if base64_image:
+            content = [
+                {
+                    "type": "text",
+                    "text": prompt
+                },
+                {
+                    "type": "image_url",
+                    "image_url": { "url": base64_image }
+                }
+            ]
+        else:
+            content = prompt
+
+        payload = {
+            "model": model_id,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": content
+                }
+            ],
+            "stream": True,
+            "temperature": temperature
+        }
+
+        if max_tokens > 0:
+            payload["max_tokens"] = max_tokens
+
+        start_time = time.time()
+        first_token_time = 0.0
+        token_count = 0
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.post(f"{server_url}/api/v1/chat", json=payload) as response:
+                    # Async read line by line for SSE
+                    async for line in response.content:
+                        line_str = line.decode('utf-8').strip()
+                        if line_str.startswith("data: "):
+                            data_str = line_str[6:].strip()
+                            if not data_str or data_str == "[DONE]":
+                                continue
+
+                            try:
+                                data = json.loads(data_str)
+                                delta = data.get("choices", [{}])[0].get("delta", {})
+                                
+                                # Check for reasoning tokens first
+                                if "reasoning_content" in delta and delta["reasoning_content"]:
+                                    if token_count == 0:
+                                        first_token_time = time.time() - start_time
+                                    token_count += 1
+                                    
+                                    content = delta["reasoning_content"]
+                                    final_reasoning += content
+                                    send_ws_update(node_id, "reasoning", content)
+                                    
+                                # Check for standard content
+                                elif "content" in delta and delta["content"]:
+                                    if token_count == 0:
+                                        first_token_time = time.time() - start_time
+                                    token_count += 1
+                                    
+                                    content = delta["content"]
+                                    final_text += content
+                                    send_ws_update(node_id, "text", content)
+                            except json.JSONDecodeError:
+                                pass
+
+            # Manual stats calculation
+            end_time = time.time()
+            total_time = end_time - (start_time + first_token_time)
+            tps = token_count / total_time if total_time > 0 else 0
+
+            stats_str = f"TPS: {tps:.2f}, TTFT: {first_token_time:.2f}s, Tokens: {token_count}"
+            return final_text, final_reasoning, stats_str
+
+        except Exception as e:
+            return f"Error: LM Studio connection failed via REST API. {str(e)}", "", "{}"
+</file>
+
+<file path="src/lmstudio/nodes.py">
+import torch
+import asyncio
+from comfy_api.latest import io, ComfyExtension
+
+from src.lmstudio.client import LMStudioSDKClient, LMStudioRESTClient
+from src.lmstudio.utils import tensor_to_base64
+
+class LMStudioChatNode(io.ComfyNode):
+    @classmethod
+    def define_schema(cls) -> io.Schema:
+        return io.Schema(
+            node_id="LMStudio_Unified_Chat",
+            display_name="LM Studio Chat",
+            category="LM Studio",
+            inputs=[
+                io.String.Input("prompt", multiline=True),
+                io.Image.Input("image", optional=True),
+                io.String.Input("model_id", default="local-model"),
+                io.Combo.Input("connection_mode", options=["SDK", "REST API"]),
+                io.Float.Input("temperature", default=0.7, min=0.0, max=2.0),
+                io.Int.Input("max_tokens", default=-1, min=-1),
+                io.String.Input("server_url", default="http://127.0.0.1:1234"),
+                io.Boolean.Input("debug_mode", default=False)
+            ],
+            outputs=[
+                io.String.Output(display_name="text"),
+                io.String.Output(display_name="reasoning"),
+                io.String.Output(display_name="stats")
+            ],
+            hidden=[
+                io.Hidden.unique_id
+            ]
+        )
+
+    @classmethod
+    async def execute(
+        cls, 
+        prompt: str, 
+        connection_mode: str, 
+        model_id: str, 
+        temperature: float, 
+        max_tokens: int,
+        server_url: str,
+        debug_mode: bool,
+        image: torch.Tensor | None = None,
+        **kwargs
+    ) -> io.NodeOutput:
+
+        node_id = cls.hidden.unique_id
+        if image is not None:
+            base64_image = await asyncio.to_thread(tensor_to_base64, image)
+        else:
+            base64_image = None
+
+        if debug_mode:
+            print(f"[LM Studio Node] Executing with mode={connection_mode}, model={model_id}")
+
+        if connection_mode == "SDK":
+            final_text, final_reasoning, stats_str = await LMStudioSDKClient.generate(
+                model_id=model_id,
+                prompt=prompt,
+                base64_image=base64_image,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                node_id=node_id
+            )
+        else:
+            # REST API mode
+            final_text, final_reasoning, stats_str = await LMStudioRESTClient.generate(
+                server_url=server_url,
+                model_id=model_id,
+                prompt=prompt,
+                base64_image=base64_image,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                node_id=node_id
+            )
+
+        return io.NodeOutput(final_text, final_reasoning, stats_str, ui={"text": [final_text]})
+
+class LMStudioExtension(ComfyExtension):
+    async def get_node_list(self) -> list[type[io.ComfyNode]]:
+        return [LMStudioChatNode]
+
+async def comfy_entrypoint() -> LMStudioExtension:
+    return LMStudioExtension()
+</file>
+
+<file path="src/lmstudio/utils.py">
+import base64
+import io
+import torch
+import numpy as np
+from PIL import Image
+
+def tensor_to_base64(tensor: torch.Tensor) -> str:
+    """
+    Convert a ComfyUI PyTorch Tensor image into a Base64-encoded JPEG string.
+
+    Args:
+        tensor: A PyTorch Tensor of shape [B, H, W, C] with float32 values from 0.0 to 1.0.
+        
+    Returns:
+        A Base64 string formatted as a standard data URI.
+    """
+    if len(tensor.shape) != 4 or tensor.shape[-1] != 3:
+        raise ValueError("Expected tensor of shape [B, H, W, 3]")
+
+    # Extract the first image: image_tensor = tensor[0]
+    image_tensor: torch.Tensor = tensor[0]
+
+    # Multiply by 255.0, clip to 0, 255, and cast to numpy.uint8
+    image_np: np.ndarray = np.clip(image_tensor.cpu().numpy() * 255.0, 0, 255).astype(np.uint8)
+
+    # Convert to PIL.Image
+    pil_image = Image.fromarray(image_np)
+
+    # Save to an io.BytesIO buffer using format "JPEG" (quality ~85)
+    buffer = io.BytesIO()
+    pil_image.save(buffer, format="JPEG", quality=85)
+
+    # Base64 encode the buffer
+    encoded_string: str = base64.b64encode(buffer.getvalue()).decode("utf-8")
+
+    return f"data:image/jpeg;base64,{encoded_string}"
+</file>
+
+<file path="tests/conftest.py">
+import os
+import sys
+from unittest.mock import MagicMock
+
+# Mock ComfyUI modules before any real imports happen
+sys.modules['server'] = MagicMock()
+sys.modules['lmstudio'] = MagicMock()
+
+comfy_api = MagicMock()
+comfy_api_latest = MagicMock()
+
+class MockNodeOutput:
+    def __init__(self, text, reasoning, stats, ui=None):
+        self.text = text
+        self.reasoning = reasoning
+        self.stats = stats
+        self.ui = ui
+
+class MockIO:
+    NodeOutput = MockNodeOutput
+    class ComfyNode:
+        pass
+    class Schema:
+        pass
+    class String:
+        Input = MagicMock()
+        Output = MagicMock()
+    class Image:
+        Input = MagicMock()
+    class Combo:
+        Input = MagicMock()
+    class Float:
+        Input = MagicMock()
+    class Int:
+        Input = MagicMock()
+    class Boolean:
+        Input = MagicMock()
+    class Hidden:
+        unique_id = MagicMock()
+
+comfy_api_latest.io = MockIO
+comfy_api_latest.ComfyExtension = MagicMock()
+
+sys.modules['comfy_api'] = comfy_api
+sys.modules['comfy_api.latest'] = comfy_api_latest
+
+# Add the project root directory to Python path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+</file>
+
+<file path="tests/test_lmstudio.py">
+import pytest
+from unittest.mock import AsyncMock, patch
+from comfy_api.latest import io
+from src.lmstudio.nodes import LMStudioChatNode
+
+@pytest.mark.asyncio
+async def test_lmstudio_node_execute():
+    # Mock hidden id
+    class MockHidden:
+        unique_id = "test_node_id"
+
+    LMStudioChatNode.hidden = MockHidden()
+
+    with patch("src.lmstudio.client.LMStudioSDKClient.generate", new_callable=AsyncMock) as mock_generate:
+        mock_generate.return_value = ("Final Answer", "Thinking...", "TPS: 30")
+
+        result = await LMStudioChatNode.execute(
+            prompt="Hello!",
+            connection_mode="SDK",
+            model_id="qwen-2.5",
+            temperature=0.7,
+            max_tokens=100,
+            server_url="http://localhost:1234",
+            debug_mode=False,
+            image=None
+        )
+
+        assert isinstance(result, io.NodeOutput)
+        assert result.text == "Final Answer"
+        assert result.reasoning == "Thinking..."
+        assert result.stats == "TPS: 30"
+
+        # Verify it called the correct generator
+        mock_generate.assert_called_once_with(
+            model_id="qwen-2.5",
+            prompt="Hello!",
+            base64_image=None,
+            temperature=0.7,
+            max_tokens=100,
+            node_id="test_node_id"
+        )
+</file>
+
+<file path="tests/test_utils.py">
+import torch
+from src.lmstudio.utils import tensor_to_base64
+
+def test_tensor_to_base64() -> None:
+    # Create a mock tensor torch.zeros((1, 512, 512, 3), dtype=torch.float32).
+    mock_tensor = torch.zeros((1, 512, 512, 3), dtype=torch.float32)
+
+    result = tensor_to_base64(mock_tensor)
+
+    # Assert that the output is a string and starts with "data:image/jpeg;base64,".
+    assert isinstance(result, str)
+    assert result.startswith("data:image/jpeg;base64,")
+    assert len(result) > 100
+</file>
+
+<file path="web/js/example.js">
+console.log(app);
+</file>
+
+<file path="web/js/lmstudio_ui.js">
+import { app } from "../../scripts/app.js";
+import { api } from "../../scripts/api.js";
+
+app.registerExtension({
+    name: "LMStudio.UnifiedChat",
+    
+    async setup() {
+        // Listen for standard LM Studio stream updates from the backend
+        api.addEventListener("lmstudio.stream.update", (event) => {
+            const detail = event.detail;
+            const node = app.graph.getNodeById(Number(detail.node_id)) || app.graph.getNodeById(detail.node_id);
+            
+            if (node && node.displayWidget) {
+                // Determine if it's a clear command, reasoning, or normal text
+                if (detail.chunk_type === "clear") {
+                    node.displayWidget.value = "";
+                } else if (detail.chunk_type === "reasoning") {
+                    node.displayWidget.value += "💭 " + detail.content;
+                } else {
+                    node.displayWidget.value += detail.content;
+                }
+                
+                // Force UI repaint without blocking execution
+                app.graph.setDirtyCanvas(true, false);
+            }
+        });
+    },
+
+    async nodeCreated(node) {
+        if (node.comfyClass === "LMStudio_Unified_Chat") {
+            // Add a custom text widget to display the stream output
+            node.displayWidget = node.addWidget("customtext", "Output Stream", "", "output");
+            
+            // Ensure it is read-only
+            if (node.displayWidget.inputEl) {
+                node.displayWidget.inputEl.readOnly = true;
+            }
+            
+            // Override the onExecuted callback directly on this instance
+            const onExecuted = node.onExecuted;
+            node.onExecuted = function(message) {
+                if (onExecuted) onExecuted.apply(this, arguments);
+                
+                // Reset or update on execution finish using the returned strings if needed
+                if (message && message.text) {
+                    this.displayWidget.value = message.text.join("");
+                }
+            };
+        }
+    }
+});
+</file>
+
+</files>

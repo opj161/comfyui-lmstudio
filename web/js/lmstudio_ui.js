@@ -29,7 +29,7 @@ app.registerExtension({
     async nodeCreated(node) {
         if (node.comfyClass === "LMStudio_Unified_Chat") {
             // Add a custom text widget to display the stream output
-            node.displayWidget = node.addWidget("text", "Output Stream", "", "output");
+            node.displayWidget = node.addWidget("customtext", "Output Stream", "", "output");
             
             // Ensure it is read-only
             if (node.displayWidget.inputEl) {

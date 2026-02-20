@@ -41,7 +41,7 @@ class LMStudioSDKClient:
             "temperature": temperature,
         }
         if max_tokens > 0:
-            config["max_tokens"] = max_tokens
+            config["maxTokens"] = max_tokens
 
         try:
             async with lms.AsyncClient() as client:
@@ -68,7 +68,9 @@ class LMStudioSDKClient:
                         send_ws_update(node_id, "text", chunk.content)
 
                 stats = stream.result().stats
-                stats_str = f"TPS: {stats.tokens_per_second:.2f}, TTFT: {stats.time_to_first_token:.2f}s"
+                ttft = getattr(stats, "time_to_first_token_sec", 0.0)
+                tokens = getattr(stats, "predicted_tokens_count", 0)
+                stats_str = f"TTFT: {ttft:.2f}s, Tokens: {tokens}"
 
                 return final_text, final_reasoning, stats_str
         except Exception as e:
@@ -82,18 +84,15 @@ class LMStudioRESTClient:
         send_ws_update(node_id, "clear", "")
         final_text = ""
         final_reasoning = ""
-
-        input_data = []
-        input_data.append({
-            "type": "text",
-            "content": prompt
-        })
+        stats_str = "Stats unavailable"
 
         if base64_image:
-            input_data.append({
-                "type": "image",
-                "data_url": base64_image
-            })
+            input_data = [
+                {"type": "text", "content": prompt},
+                {"type": "image", "data_url": base64_image}
+            ]
+        else:
+            input_data = prompt
 
         payload = {
             "model": model_id,
@@ -103,16 +102,11 @@ class LMStudioRESTClient:
         }
 
         if max_tokens > 0:
-            payload["max_tokens"] = max_tokens
-
-        start_time = time.time()
-        first_token_time = 0.0
-        token_count = 0
+            payload["max_output_tokens"] = max_tokens
 
         try:
             async with aiohttp.ClientSession() as session:
                 async with session.post(f"{server_url}/api/v1/chat", json=payload) as response:
-                    # Async read line by line for SSE
                     async for line in response.content:
                         line_str = line.decode('utf-8').strip()
                         if line_str.startswith("data: "):
@@ -122,36 +116,33 @@ class LMStudioRESTClient:
 
                             try:
                                 data = json.loads(data_str)
-                                delta = data.get("choices", [{}])[0].get("delta", {})
-                                
-                                # Check for reasoning tokens first
-                                if "reasoning_content" in delta and delta["reasoning_content"]:
-                                    if token_count == 0:
-                                        first_token_time = time.time() - start_time
-                                    token_count += 1
-                                    
-                                    content = delta["reasoning_content"]
+                                evt_type = data.get("type")
+
+                                if evt_type == "reasoning.delta":
+                                    content = data.get("content", "")
                                     final_reasoning += content
                                     send_ws_update(node_id, "reasoning", content)
                                     
-                                # Check for standard content
-                                elif "content" in delta and delta["content"]:
-                                    if token_count == 0:
-                                        first_token_time = time.time() - start_time
-                                    token_count += 1
-                                    
-                                    content = delta["content"]
+                                elif evt_type == "message.delta":
+                                    content = data.get("content", "")
                                     final_text += content
                                     send_ws_update(node_id, "text", content)
+                                
+                                elif evt_type == "chat.end":
+                                    stats = data.get("result", {}).get("stats", {})
+                                    tps = stats.get("tokens_per_second", 0)
+                                    ttft = stats.get("time_to_first_token_seconds", 0)
+                                    tokens = stats.get("total_output_tokens", 0)
+                                    stats_str = f"TPS: {tps:.2f}, TTFT: {ttft:.2f}s, Tokens: {tokens}"
+                                    
+                                elif evt_type == "error":
+                                    err_msg = data.get("error", {}).get("message", "Unknown error")
+                                    final_text += f"\n[Error: {err_msg}]"
+                                    send_ws_update(node_id, "text", f"\n[Error: {err_msg}]")
+
                             except json.JSONDecodeError:
                                 pass
 
-            # Manual stats calculation
-            end_time = time.time()
-            total_time = end_time - (start_time + first_token_time)
-            tps = token_count / total_time if total_time > 0 else 0
-
-            stats_str = f"TPS: {tps:.2f}, TTFT: {first_token_time:.2f}s, Tokens: {token_count}"
             return final_text, final_reasoning, stats_str
 
         except Exception as e:
