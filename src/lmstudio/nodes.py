@@ -2,8 +2,8 @@ import torch
 import asyncio
 from comfy_api.latest import io, ComfyExtension
 
-from src.lmstudio.client import LMStudioSDKClient, LMStudioRESTClient
-from src.lmstudio.utils import tensor_to_base64
+from .client import LMStudioSDKClient, LMStudioRESTClient
+from .utils import tensor_to_base64
 
 class LMStudioChatNode(io.ComfyNode):
     @classmethod
