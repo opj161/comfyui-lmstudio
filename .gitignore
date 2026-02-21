@@ -115,7 +115,6 @@ node.zip
 .vscode/
 .claude/
 
-.docs
 comfyui-lmstudio.xml
 
 .specs

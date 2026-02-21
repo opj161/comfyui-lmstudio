@@ -130,7 +130,7 @@ class LMStudioRESTClient:
         final_reasoning = ""
         stats_str = "Stats unavailable"
 
-        input_data = [{"type": "text", "text": prompt}, {"type": "image_url", "image_url": {"url": base64_image}}] if base64_image else prompt
+        input_data = [{"type": "text", "content": prompt}, {"type": "image", "data_url": base64_image}] if base64_image else prompt
 
         # Native LM Studio API formatting
         payload = {
