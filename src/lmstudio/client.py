@@ -52,7 +52,7 @@ def send_ws_update(node_id: str, chunk_type: str, content: str) -> None:
 
 class LMStudioSDKClient:
     @staticmethod
-    async def generate(node_id: str, system_prompt: str, prompt: str, base64_image: str | None, json_schema: str, model_id: str, seed: int, temperature: float, max_tokens: int) -> tuple[str, str, str]:
+    async def generate(node_id: str, system_prompt: str, prompt: str, base64_image: str | None, json_schema: str, model_id: str, seed: int, temperature: float, max_tokens: int, reasoning_effort: str = "auto") -> tuple[str, str, str]:
         send_ws_update(node_id, "clear", "")
         final_text = ""
         final_reasoning = ""
@@ -60,6 +60,8 @@ class LMStudioSDKClient:
         config = {"temperature": temperature, "seed": seed}
         if max_tokens > 0:
             config["maxTokens"] = max_tokens
+        if reasoning_effort != "auto":
+            config["reasoning"] = reasoning_effort
 
         # Parse schema safely
         parsed_schema = None
@@ -124,7 +126,7 @@ class LMStudioSDKClient:
 
 class LMStudioRESTClient:
     @staticmethod
-    async def generate(node_id: str, system_prompt: str, server_url: str, model_id: str, prompt: str, base64_image: str | None, json_schema: str, seed: int, temperature: float, max_tokens: int) -> tuple[str, str, str]:
+    async def generate(node_id: str, system_prompt: str, server_url: str, model_id: str, prompt: str, base64_image: str | None, json_schema: str, seed: int, temperature: float, max_tokens: int, reasoning_effort: str = "auto") -> tuple[str, str, str]:
         send_ws_update(node_id, "clear", "")
         final_text = ""
         final_reasoning = ""
@@ -146,6 +148,9 @@ class LMStudioRESTClient:
 
         if max_tokens > 0:
             payload["max_output_tokens"] = max_tokens
+
+        if reasoning_effort != "auto":
+            payload["reasoning"] = reasoning_effort
 
         # JSON Schema injection for REST
         if json_schema.strip():

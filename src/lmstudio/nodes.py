@@ -27,6 +27,7 @@ class LMStudioChatNode(io.ComfyNode):
                 io.Int.Input("seed", default=0, min=0, max=0xffffffffffffffff, control_after_generate=io.ControlAfterGenerate.randomize),
                 io.Float.Input("temperature", default=0.7, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider),
                 io.Int.Input("max_tokens", default=-1, min=-1, display_mode=io.NumberDisplay.number),
+                io.Combo.Input("reasoning_effort", options=["auto", "off", "low", "medium", "high", "on"], default="auto", tooltip="Controls thinking/reasoning intensity. 'auto' lets the model decide. Will error if model does not support reasoning."),
                 io.String.Input("stream_output", multiline=True, default="Waiting for generation..."),
                 io.Boolean.Input("debug_mode", default=False)
             ],
@@ -56,6 +57,7 @@ class LMStudioChatNode(io.ComfyNode):
         seed: int,
         temperature: float, 
         max_tokens: int,
+        reasoning_effort: str,
         stream_output: str,
         debug_mode: bool = False,
         image: torch.Tensor | None = None,
@@ -83,6 +85,7 @@ class LMStudioChatNode(io.ComfyNode):
                 seed=seed,
                 temperature=temperature,
                 max_tokens=max_tokens,
+                reasoning_effort=reasoning_effort,
                 node_id=node_id
             )
         else:
@@ -96,6 +99,7 @@ class LMStudioChatNode(io.ComfyNode):
                 seed=seed,
                 temperature=temperature,
                 max_tokens=max_tokens,
+                reasoning_effort=reasoning_effort,
                 node_id=node_id
             )
 

@@ -29,6 +29,9 @@ class MockIO:
         Input = MagicMock()
     class Combo:
         Input = MagicMock()
+    class DynamicCombo:
+        Input = MagicMock()
+        Option = MagicMock()
     class Float:
         Input = MagicMock()
     class Int:
@@ -37,6 +40,11 @@ class MockIO:
         Input = MagicMock()
     class Hidden:
         unique_id = MagicMock()
+    class ControlAfterGenerate:
+        randomize = MagicMock()
+    class NumberDisplay:
+        slider = MagicMock()
+        number = MagicMock()
 
 comfy_api_latest.io = MockIO
 comfy_api_latest.ComfyExtension = MagicMock()
