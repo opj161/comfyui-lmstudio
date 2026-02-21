@@ -23,6 +23,7 @@ class LMStudioChatNode(io.ComfyNode):
                         io.String.Input("server_url", default="http://127.0.0.1:1234")
                     ])
                 ]),
+                io.String.Input("json_schema", multiline=True, default="", tooltip="Optional: Enforce JSON output using a JSON Schema definition."),
                 io.Int.Input("seed", default=0, min=0, max=0xffffffffffffffff, control_after_generate=io.ControlAfterGenerate.randomize),
                 io.Float.Input("temperature", default=0.7, min=0.0, max=2.0, step=0.05, display_mode=io.NumberDisplay.slider),
                 io.Int.Input("max_tokens", default=-1, min=-1, display_mode=io.NumberDisplay.number),
@@ -39,9 +40,9 @@ class LMStudioChatNode(io.ComfyNode):
             ]
         )
 
-    # FIX: This tells ComfyUI to accept whatever dynamic combo values the frontend sends.
     @classmethod
     def validate_inputs(cls, **kwargs) -> bool:
+        """Bypass strict Combo validation to allow dynamic model lists from the frontend."""
         return True
 
     @classmethod
@@ -51,6 +52,7 @@ class LMStudioChatNode(io.ComfyNode):
         prompt: str, 
         connection_mode: dict, 
         model_id: str, 
+        json_schema: str,
         seed: int,
         temperature: float, 
         max_tokens: int,
@@ -64,10 +66,9 @@ class LMStudioChatNode(io.ComfyNode):
         server_url = connection_mode.get("server_url", "http://127.0.0.1:1234")
 
         node_id = cls.hidden.unique_id
+        base64_image = None
         if image is not None:
             base64_image = await asyncio.to_thread(tensor_to_base64, image)
-        else:
-            base64_image = None
 
         if debug_mode:
             print(f"[LM Studio Node] Executing with mode={mode_selected}, model={model_id}")
@@ -78,19 +79,20 @@ class LMStudioChatNode(io.ComfyNode):
                 model_id=model_id,
                 prompt=prompt,
                 base64_image=base64_image,
+                json_schema=json_schema,
                 seed=seed,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 node_id=node_id
             )
         else:
-            # REST API mode
             final_text, final_reasoning, stats_str = await LMStudioRESTClient.generate(
                 system_prompt=system_prompt,
                 server_url=server_url,
                 model_id=model_id,
                 prompt=prompt,
                 base64_image=base64_image,
+                json_schema=json_schema,
                 seed=seed,
                 temperature=temperature,
                 max_tokens=max_tokens,
