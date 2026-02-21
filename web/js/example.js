@@ -1,1 +1,1 @@
-console.log(app);
+// Placeholder - no-op
