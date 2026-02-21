@@ -20,7 +20,7 @@ class LMStudioChatNode(io.ComfyNode):
                 io.DynamicCombo.Input("connection_mode", options=[
                     io.DynamicCombo.Option("SDK", []),
                     io.DynamicCombo.Option("REST API", [
-                        io.String.Input("server_url", default="http://127.0.0.1:1234")
+                        io.String.Input("server_url", default="http://localhost:1234")
                     ])
                 ]),
                 io.String.Input("json_schema", multiline=True, default="", tooltip="Optional: Enforce JSON output using a JSON Schema definition."),
@@ -63,7 +63,7 @@ class LMStudioChatNode(io.ComfyNode):
     ) -> io.NodeOutput:
 
         mode_selected = connection_mode.get("connection_mode", "SDK")
-        server_url = connection_mode.get("server_url", "http://127.0.0.1:1234")
+        server_url = connection_mode.get("server_url", "http://localhost:1234")
 
         node_id = cls.hidden.unique_id
         base64_image = None

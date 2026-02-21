@@ -19,19 +19,22 @@ try:
         @PromptServer.instance.routes.get("/lmstudio/models")
         async def fetch_lmstudio_models(request):
             """Custom route to fetch models. Accepts a URL parameter for remote REST servers."""
-            # Default to localhost if no URL is provided
-            base_url = request.query.get("url", "http://127.0.0.1:1234").rstrip("/")
+            # Use localhost to prevent IPv4/IPv6 connection refused issues on Windows
+            base_url = request.query.get("url", "http://localhost:1234").rstrip("/")
             target_url = f"{base_url}/api/v1/models"
             
             try:
                 async with aiohttp.ClientSession() as session:
                     async with session.get(target_url, timeout=2) as resp:
+                        resp.raise_for_status() # Raise exception for bad status codes
                         data = await resp.json()
                         models = [m.get("id") or m.get("key") for m in data.get("data", []) or data.get("models", []) if m.get("type", "llm") == "llm" or m.get("object") == "model"]
                         if not models:
                             models = ["No LLMs found in LM Studio"]
                         return web.json_response({"models": models})
-            except Exception:
+            except Exception as e:
+                # Log the exact error to the ComfyUI console so you can debug network issues
+                print(f"[LM Studio Node] Warning: Could not fetch models from {target_url}. Error: {e}")
                 return web.json_response({"models": ["LM Studio offline"]})
 except ImportError:
     pass
