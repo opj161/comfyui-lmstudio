@@ -25,7 +25,7 @@ try:
                             models = ["No LLMs found in LM Studio"]
                         return web.json_response({"models": models})
             except Exception:
-                return web.json_response({"models": ["Ensure LM Studio is running..."]})
+                return web.json_response({"models": ["LM Studio offline"]})
 except ImportError:
     pass
 
@@ -98,7 +98,8 @@ class LMStudioSDKClient:
                         final_text += content
                         send_ws_update(node_id, "text", content)
 
-                result_obj = await stream.result()
+                # FIX: Removed the 'await' keyword. result() is a synchronous property in the SDK once streamed.
+                result_obj = stream.result()
                 stats = result_obj.stats
                 ttft = getattr(stats, "time_to_first_token_sec", 0.0)
                 tokens = getattr(stats, "predicted_tokens_count", 0)

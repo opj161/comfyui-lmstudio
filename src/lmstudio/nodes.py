@@ -39,6 +39,11 @@ class LMStudioChatNode(io.ComfyNode):
             ]
         )
 
+    # FIX: This tells ComfyUI to accept whatever dynamic combo values the frontend sends.
+    @classmethod
+    def validate_inputs(cls, **kwargs) -> bool:
+        return True
+
     @classmethod
     async def execute(
         cls, 

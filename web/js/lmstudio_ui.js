@@ -11,7 +11,6 @@ app.registerExtension({
             const node = app.graph.getNodeById(Number(detail.node_id)) || app.graph.getNodeById(detail.node_id);
             
             if (node && node.displayWidget) {
-                // Determine if it's a clear command, reasoning, or normal text
                 if (detail.chunk_type === "clear") {
                     node.displayWidget.value = "";
                 } else if (detail.chunk_type === "reasoning") {
@@ -19,8 +18,6 @@ app.registerExtension({
                 } else {
                     node.displayWidget.value += detail.content;
                 }
-                
-                // Force UI repaint without blocking execution
                 app.graph.setDirtyCanvas(true, false);
             }
         });
@@ -28,8 +25,9 @@ app.registerExtension({
 
     async nodeCreated(node) {
         if (node.comfyClass === "LMStudio_Unified_Chat") {
-            // Find the pre-registered node Schema widget dynamically to natively support Vue 2.0 streaming
-            const targetWidget = node.widgets.find(w => w.name === "stream_output");
+            
+            // FIX 1: Use ?. to prevent silent crashes if widgets aren't mounted yet
+            const targetWidget = node.widgets?.find(w => w.name === "stream_output");
             if (targetWidget) {
                 node.displayWidget = targetWidget;
                 if (targetWidget.inputEl) {
@@ -37,37 +35,42 @@ app.registerExtension({
                 }
             }
             
-            // 2. NEW: Fetch and populate the model_id dropdown
-            const modelWidget = node.widgets.find(w => w.name === "model_id");
+            // FIX 2: Safely fetch models and preserve user state
+            const modelWidget = node.widgets?.find(w => w.name === "model_id");
             if (modelWidget) {
-                try {
-                    // Call our custom python route
-                    api.fetchApi("/lmstudio/models").then(response => response.json()).then(data => {
+                const fetchModels = async () => {
+                    try {
+                        const response = await api.fetchApi("/lmstudio/models");
+                        if (!response.ok) throw new Error("Network error");
+                        const data = await response.json();
+                        
                         if (data.models && data.models.length > 0) {
-                            // Replace the widget's options with the live LM Studio models
                             modelWidget.options.values = data.models;
-                            modelWidget.value = data.models[0]; // Auto-select the first one
+                            
+                            // Only override the value if it's the placeholder or an invalid model.
+                            // This ensures we don't destroy the user's saved workflow settings on reload!
+                            if (modelWidget.value === "Loading models from LM Studio..." || !data.models.includes(modelWidget.value)) {
+                                modelWidget.value = data.models[0]; 
+                            }
                             app.graph.setDirtyCanvas(true, false);
                         }
-                    }).catch(e => {
-                        console.error("[LM Studio] Failed to fetch models from backend", e);
+                    } catch (e) {
+                        console.warn("[LM Studio] Failed to fetch models. Ensure LM Studio is running.", e);
                         modelWidget.options.values = ["LM Studio offline"];
-                        modelWidget.value = "LM Studio offline";
+                        if (modelWidget.value === "Loading models from LM Studio...") {
+                            modelWidget.value = "LM Studio offline";
+                        }
                         app.graph.setDirtyCanvas(true, false);
-                    });
-                } catch (e) {
-                    console.error("[LM Studio] Failed to fetch models from backend", e);
-                    modelWidget.options.values = ["LM Studio offline"];
-                    modelWidget.value = "LM Studio offline";
-                }
+                    }
+                };
+                
+                // Fetch immediately
+                fetchModels();
             }
             
-            // Override the onExecuted callback directly on this instance
             const onExecuted = node.onExecuted;
             node.onExecuted = function(message) {
                 if (onExecuted) onExecuted.apply(this, arguments);
-                
-                // Reset or update on execution finish using the returned strings if needed
                 if (message && message.text) {
                     this.displayWidget.value = message.text.join("");
                 }
